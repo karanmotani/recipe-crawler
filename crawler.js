@@ -4,19 +4,19 @@ var fs = require('fs');
 // Check if file exists, else create one
 
 function checkFileExists() {
-  fs.readFile('output.txt', 'utf8', function(err, data){
+  fs.readFile('output.json', 'utf8', function(err, data){
     if (data) {
-      fs.writeFile('output.txt', data.slice(0, -1), function (err) {
-      if (err) throw err;
+      fs.writeFile('output.json', data.slice(0, -1), function (err) {
+        if (err) throw err;
       }); 
     }
     else {
-      fs.writeFile('output.txt', '[' + '\n', function (err) {
-      if (err) throw err;
+      fs.writeFile('output.json', '[]', function (err) {
+        if (err) throw err;
         console.log('Output File is created successfully.');
       }); 
     }
-  })
+  });
 }
 
 // Crawl data (Get 500 recipes at once)
@@ -33,6 +33,8 @@ function crawl() {
               "&fetchUserCollections=false&allowedContent=single_recipe&allowedContent=suggested_search" + 
               "&allowedContent=related_search&allowedContent=article&allowedContent=video&guided-search=true" + 
               "&solr.view_type=search_internal";
+
+  var recipes = []; // Create an array to store recipe objects
 
   request(api, function(error, response, body) {
     if(error) {
@@ -67,22 +69,28 @@ function crawl() {
           recipeType.push(element['display-name']);
         });
 
-      fs.appendFileSync('output.txt', '{\n' + 
-        'recipeUrl: ' + website + '/' + recipeUrl + ',\n' + 
-        'recipeName: ' + recipeName + ',\n' + 
-        'recipePhoto: ' + recipePhoto + ',\n' + 
-        'ingredients: ' + ingredients + ',\n' + 
-        'ratings: ' + ratings + ',\n' + 
-        'cookTime: ' + cookTime + ',\n' + 
-        'serve: ' + serve + ',\n' + 
-        'tags: ' + tags + ',\n' +
-        'recipeType: ' + recipeType + '\n' +
-        '},' + '\n');
+      // Create a recipe object
+      var recipe = {
+        recipeUrl: website + '/' + recipeUrl,
+        recipeName: recipeName,
+        recipePhoto: recipePhoto,
+        ingredients: ingredients,
+        ratings: ratings,
+        cookTime: cookTime,
+        serve: serve,
+        tags: tags,
+        recipeType: recipeType
+      };
+
+      recipes.push(recipe); // Push the recipe object to the array
     
     });
-    fs.appendFileSync('output.txt', ']');
-  });
 
+    // Write the array of recipe objects to the JSON file
+    fs.writeFile('output.json', JSON.stringify(recipes, null, 2), function (err) {
+      if (err) throw err;
+    });
+  });
 }
 
 checkFileExists();
